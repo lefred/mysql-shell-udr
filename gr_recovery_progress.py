@@ -1,8 +1,7 @@
 def gr_recovery_progress(session):
-    query = session.sql("select substring_index(substring_index(GTID_SUBTRACT(RECEIVED_TRANSACTION_SET,@@gtid_executed),':',-1),'-',-1)-substring_index(substring_index(GTID_SUBTRACT(RECEIVED_TRANSACTION_SET,@@gtid_executed),':',-1),'-',1) as trx_to_recover from performance_schema.replication_connection_status where channel_name='group_replication_recovery'")
+    result = session.run_sql("select substring_index(substring_index(GTID_SUBTRACT(RECEIVED_TRANSACTION_SET,@@gtid_executed),':',-1),'-',-1)-substring_index(substring_index(GTID_SUBTRACT(RECEIVED_TRANSACTION_SET,@@gtid_executed),':',-1),'-',1) as trx_to_recover from performance_schema.replication_connection_status where channel_name='group_replication_recovery'")
 
 
-    result = query.execute()
     report = [result.get_column_names()]
     for row in result.fetch_all():
         report.append(list(row))
