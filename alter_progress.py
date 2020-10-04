@@ -1,13 +1,12 @@
 def _get_version(session):
-    query = session.sql("SELECT @@version")
-    result = query.execute()
+    result = session.run_sql("SELECT @@version")
     col = result.fetch_one()
     return col[0].split('.')[0]
 
 def alter_progress(session):
     version = _get_version(session)
     if version == "8":
-        query = session.sql("""SELECT stmt.THREAD_ID, stmt.SQL_TEXT, stage.EVENT_NAME AS State,
+        result = session.run_sql("""SELECT stmt.THREAD_ID, stmt.SQL_TEXT, stage.EVENT_NAME AS State,
                    stage.WORK_COMPLETED, stage.WORK_ESTIMATED,
                    lpad(CONCAT(ROUND(100*stage.WORK_COMPLETED/stage.WORK_ESTIMATED, 2),"%"),12," ") 
                    AS CompletedPct, 
@@ -19,7 +18,7 @@ def alter_progress(session):
             INNER JOIN performance_schema.events_stages_current stage 
                     ON stage.THREAD_ID = stmt.THREAD_ID""")
     else:
-        query = session.sql("""SELECT stmt.THREAD_ID, stmt.SQL_TEXT, stage.EVENT_NAME AS State,
+        result = session.run_sql("""SELECT stmt.THREAD_ID, stmt.SQL_TEXT, stage.EVENT_NAME AS State,
                    stage.WORK_COMPLETED, stage.WORK_ESTIMATED,
                    lpad(CONCAT(ROUND(100*stage.WORK_COMPLETED/stage.WORK_ESTIMATED, 2),"%"),12," ") 
                    AS CompletedPct, 
@@ -30,7 +29,6 @@ def alter_progress(session):
                     ON mt.thread_id = stmt.thread_id 
             INNER JOIN performance_schema.events_stages_current stage 
                     ON stage.THREAD_ID = stmt.THREAD_ID""")
-    result = query.execute()
     report = [result.get_column_names()]
     for row in result.fetch_all():
         report.append(list(row))
